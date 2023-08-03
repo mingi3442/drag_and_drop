@@ -1,9 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import * as React from "react";
 import logo from "./logo.svg";
 import "./App.css";
-import { useSpring, animated } from "react-spring";
-import { useDrag } from "react-use-gesture";
+// import { useSpring, animated } from "react-spring";
+// import { useDrag } from "react-use-gesture";
+import Draggable, { DraggableData } from "react-draggable";
+import { styled } from "styled-components";
 function App() {
+  // 현재 스크린 사이즈
   function getCurrentDimension() {
     return {
       width: window.innerWidth,
@@ -11,19 +14,6 @@ function App() {
     };
   }
 
-  const [screenSize, setScreenSize] = useState(getCurrentDimension());
-  const logoLocation = useSpring({ x: 0, y: 0 });
-  const linkTextLocation = useSpring<{ x: number; y: number }>({ x: 0, y: 0 });
-  const bindLogoLocation = useDrag((params) => {
-    logoLocation.x.set(params.offset[0]);
-    logoLocation.y.set(params.offset[1]);
-  });
-  const bindLinkTextLocation = useDrag((params) => {
-    console.log(params);
-    linkTextLocation.x.set(params.movement[0]);
-    linkTextLocation.y.set(params.movement[1]);
-  });
-  // console.log(screenSize);
   // useEffect(() => {
   //   const updateDimension = () => {
   //     setScreenSize(getCurrentDimension());
@@ -34,46 +24,62 @@ function App() {
   //     window.removeEventListener("resize", updateDimension);
   //   };
   // }, [screenSize]);
+  // const containerRef = useRef<HTMLHeadingElement>(null);
+  const draggableBoxRef = React.useRef<HTMLHeadingElement>(null);
+
+  const onClickBoxInformation = () => {
+    console.log("width : ", draggableBoxRef.current?.offsetWidth);
+    console.log("height : ", draggableBoxRef.current?.offsetHeight);
+  };
+
   return (
     <div className="App">
       <header className="App-header">
-        <animated.div
-          {...bindLogoLocation()}
-          style={{
-            x: logoLocation.x,
-            y: logoLocation.y,
-          }}
-        >
-          <img src={logo} className="App-logo" alt="logo" />
-        </animated.div>
-        {/* <animated.p {...bindLinkTextLocation()} style={{ position: "absolute", left: linkTextLocation.x, top: linkTextLocation.y }}>
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
           Edit <code>src/App.tsx</code> and save to reload.
-        </animated.p> */}
+        </p>
         <a className="App-link" href="https://reactjs.org" target="_blank" rel="noopener noreferrer">
           Learn React
         </a>
-        <TestComponent></TestComponent>
+        <TestComponent currentRef={draggableBoxRef} />
+        <button onClick={onClickBoxInformation}>BOX Information </button>
       </header>
     </div>
   );
 }
 
-const TestComponent = () => {
-  const linkTextLocation = useSpring<{ x: number; y: number }>({ x: 0, y: 0 });
-  const ref = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    console.log("width", ref.current ? ref.current.offsetWidth! : 0);
-  }, [ref]);
-  const bindLinkTextLocation = useDrag((params) => {
-    console.log(params);
-    linkTextLocation.x.set(params.offset[0]);
-    linkTextLocation.y.set(params.offset[1]);
-  });
+const TestComponent = ({ currentRef }: { currentRef: React.RefObject<HTMLHeadingElement> }) => {
+  // const TestComponent = ({ func, boundRef }: { func: Dispatch<SetStateAction<any[]>>; boundRef?: React.RefObject<HTMLHeadingElement> }) => {
+  const [position, setPosition] = React.useState({ x: 0, y: 0 }); // box의 포지션 값
+  // 업데이트 되는 값을 set 해줌
+  const trackPos = (data: DraggableData) => {
+    setPosition({ x: data.x, y: data.y });
+  };
+
   return (
-    <animated.p {...bindLinkTextLocation()} ref={ref} style={{ position: "absolute", x: linkTextLocation.x, y: linkTextLocation.y }}>
-      TEST Component
-    </animated.p>
+    <Draggable nodeRef={currentRef} onDrag={(e, data) => trackPos(data)} bounds={"parent"}>
+      <TestBox ref={currentRef}>
+        <div>BOX</div>
+        <div>
+          x: {position.x.toFixed(0)}, y: {position.y.toFixed(0)}
+        </div>
+      </TestBox>
+    </Draggable>
   );
 };
+
+const TestBox = styled.div`
+  position: absolute;
+  cursor: move;
+  color: black;
+  width: 40vw;
+  height: 10vh;
+  border-radius: 5px;
+  padding: 1em;
+  margin: auto;
+  user-select: none;
+  background: lightgrey;
+`;
 
 export default App;
